@@ -1,0 +1,28 @@
+# ISL Sign Language Recognition Project
+# Core ML
+tensorflow==2.13.0
+numpy==1.24.3
+scikit-learn==1.3.0
+
+# MediaPipe
+mediapipe==0.10.11
+opencv-contrib-python==4.8.0.76
+
+# NLP / Grammar correction
+language-tool-python==2.7.1
+
+# Text to speech
+pyttsx3==2.90
+
+# Streamlit UI
+streamlit==1.28.0
+
+# Visualisation (evaluation plots)
+matplotlib==3.7.2
+seaborn==0.12.2
+
+# Data handling
+pandas==2.0.3
+
+# Utilities
+tqdm==4.66.1
