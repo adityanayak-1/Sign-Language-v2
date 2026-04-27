@@ -19,25 +19,45 @@ def mediapipe_detection(image, model):
     return image, results
 
 def draw_landmarks(image, results):
-    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS)
     mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
     mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
-    
-def draw_styled_landmarks(image, results):
-    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS, 
-                              mp_drawing.DrawingSpec(color=(80,22,10), thickness=2, circle_radius= 4),
-                              mp_drawing.DrawingSpec(color=(80,44,121), thickness=2, circle_radius= 2))
-    
-    mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
-                              mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius= 4),
-                              mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius= 2))
-    
-    mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
-                              mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius= 4),
-                              mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius= 2))
 
 # Pose landmark indices: shoulders(11,12), elbows(13,14), wrists(15,16)
 POSE_KEEP = [11, 12, 13, 14, 15, 16]
+
+# Connections between the 6 kept pose landmarks only
+POSE_KEEP_CONNECTIONS = [
+    (11, 13), (13, 15),  # left shoulder -> elbow -> wrist
+    (12, 14), (14, 16),  # right shoulder -> elbow -> wrist
+    (11, 12),            # shoulder to shoulder
+]
+
+def draw_styled_landmarks(image, results):
+    h, w = image.shape[:2]
+
+    # Draw only the 6 selected pose landmarks and their connections
+    if results.pose_landmarks:
+        lm = results.pose_landmarks.landmark
+
+        # Lines first (underneath dots)
+        for (a, b) in POSE_KEEP_CONNECTIONS:
+            ax, ay = int(lm[a].x * w), int(lm[a].y * h)
+            bx, by = int(lm[b].x * w), int(lm[b].y * h)
+            cv2.line(image, (ax, ay), (bx, by), (80, 44, 121), 2)
+
+        # Dots
+        for i in POSE_KEEP:
+            cx, cy = int(lm[i].x * w), int(lm[i].y * h)
+            cv2.circle(image, (cx, cy), 4, (80, 22, 10), -1)
+
+    # Hands — same colours as before
+    mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
+                              mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4),
+                              mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2))
+    
+    mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
+                              mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius=4),
+                              mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2))
 
 def extract_keypoints(results):
     pose = np.array([[results.pose_landmarks.landmark[i].x,
@@ -50,7 +70,7 @@ def extract_keypoints(results):
     return np.concatenate([pose, lh, rh])
 
 if __name__ == "__main__":
-    cap= cv2.VideoCapture(0)
+    cap= cv2.VideoCapture(1)
     with mp_holistic.Holistic(min_detection_confidence= 0.5, min_tracking_confidence= 0.5) as holistic:
         while cap.isOpened():
             ret, frame= cap.read()
