@@ -17,24 +17,14 @@ actions = np.array([
     "Name",
     "What",
     "Where",
-    "When",
-    "How",
     "Hello",
     "Food",
-    "Water",
-    "Home",
     "Work",
     "Help",
-    "Happy",
     "Sad",
-    "Good",
     "Finished",
     "ThankYou",
-    "Today",
-    "Monday",
-    "Red",
-    "Black",
-    "White"
+    "Today"
 ])
 
 no_sequences    = 30

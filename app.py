@@ -137,7 +137,7 @@ def draw_ui(image, state, countdown_val, current_sign, confidence,
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)  # 1 = DroidCam (phone camera)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
@@ -216,7 +216,7 @@ def main():
             # ── Draw ──────────────────────────────────────────────────────────
             image = draw_ui(image, state, countdown_val, current_sign,
                             confidence, recording, inactivity_progress)
-            cv2.imshow("ISL Recognition", image)
+            cv2.imshow("Sign Language Recognition", image)
 
             key = cv2.waitKey(1) & 0xFF
 
