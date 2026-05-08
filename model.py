@@ -29,7 +29,6 @@ if __name__ == "__main__":
         metrics=['categorical_accuracy']
     )
 
-    print("Starting training... Press Ctrl+C to stop.")
     model.fit(X_train, Y_train, epochs=1000, callbacks=[tb_callback, early_stopping])
 
     model.save('action.h5')

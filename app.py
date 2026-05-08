@@ -1,16 +1,3 @@
-# app.py
-# Real-time ISL sign recognition with Ollama-powered sentence formation
-#
-# HOW TO USE:
-#   1. Stand in front of webcam with good lighting
-#   2. Press SPACE to start recording a sign
-#   3. Perform the sign clearly — prediction appears automatically
-#   4. Keep signing — sentence forms automatically after 3s inactivity
-#   5. Press C to manually trigger sentence formation
-#   6. Press S to speak the formed sentence
-#   7. Press R to reset everything
-#   8. Press Q to quit
-
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
@@ -32,7 +19,7 @@ print(f"Model ready. {len(actions)} actions loaded.")
 sf.warmup_ollama()
 
 # ── Settings ──────────────────────────────────────────────────────────────────
-CONFIDENCE_THRESHOLD = 0.80
+CONFIDENCE_THRESHOLD = 0.70
 COOLDOWN             = 2.0    # seconds before same sign can repeat
 
 # ── TTS ───────────────────────────────────────────────────────────────────────
@@ -135,11 +122,71 @@ def draw_ui(image, state, countdown_val, current_sign, confidence,
 
     return image
 
+# ── Find DroidCam automatically ──────────────────────────────────────────────
+def find_droidcam(max_index=5):
+    """
+    Scan camera indices 0-max_index and return the first one whose
+    resolution is NOT 640x480 (laptop webcams almost always report
+    exactly 640x480 as their default; DroidCam reports differently),
+    OR fall back to the highest available index if that heuristic fails.
+    Prints a summary so you can see what was found.
+    """
+    available = []
+    for i in range(max_index + 1):
+        cap = cv2.VideoCapture(i)
+        if not cap.isOpened():
+            cap.release()
+            continue
+        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        ret, _ = cap.read()
+        cap.release()
+        if ret:
+            available.append((i, w, h))
+            print(f"  Camera index {i}: {w}x{h}")
+
+    if not available:
+        print("  No cameras found — defaulting to index 0")
+        return 0
+
+    if len(available) == 1:
+        print(f"  Only one camera found — using index {available[0][0]}")
+        return available[0][0]
+
+    # Prefer the camera whose resolution differs from the first (laptop) camera
+    laptop_w, laptop_h = available[0][1], available[0][2]
+    for idx, w, h in available[1:]:
+        if w != laptop_w or h != laptop_h:
+            print(f"  DroidCam detected at index {idx} ({w}x{h})")
+            return idx
+
+    # All cameras report the same resolution — use the last index (DroidCam
+    # is always registered after the built-in webcam)
+    chosen = available[-1][0]
+    print(f"  Defaulting to last camera index {chosen}")
+    return chosen
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    cap = cv2.VideoCapture(1)  # 1 = DroidCam (phone camera)
+    print("Scanning cameras...")
+    cam_index = find_droidcam()
+    print(f"Using camera index: {cam_index}\n")
+
+    cap = cv2.VideoCapture(cam_index)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+    # ── Fallback to laptop camera if chosen camera gives no frames ────────────
+    if cam_index != 0:
+        ret, _ = cap.read()
+        if not ret:
+            print(f"  Camera index {cam_index} not responding — falling back to laptop camera (index 0)")
+            cap.release()
+            cap = cv2.VideoCapture(0)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            print("  Using laptop camera.")
 
     last_sign      = ""
     last_sign_time = 0.0

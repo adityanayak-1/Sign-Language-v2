@@ -1,8 +1,3 @@
-# sentence_formation.py
-# Handles all sentence formation logic — sign buffer, deduplication,
-# inactivity detection, and Ollama-based grammar reconstruction.
-# Designed to be imported by app.py — no OpenCV or camera logic here.
-
 import threading
 import time
 
@@ -16,7 +11,7 @@ _SYSTEM_PROMPT = """\
 You are an expert ISL (Indian Sign Language) to English translator.
 ISL grammar follows Subject-Object-Verb order, unlike English Subject-Verb-Object.
 
-Your job: receive a comma-separated list of ISL signs and output ONE fluent, \
+Your job: receive a comma-separated list of ISL signs and output ONE fluent, 
 grammatically correct English sentence.
 
 Strict rules:
